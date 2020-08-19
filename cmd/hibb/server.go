@@ -4,10 +4,15 @@ import (
 	"github.com/dcso/bloom"
 	"crypto/sha1"
 	"net/http"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 )
+
+type Hit struct {
+	found	bool
+}
 
 var filter *bloom.BloomFilter
 
@@ -20,28 +25,39 @@ func check(w http.ResponseWriter, r *http.Request) {
 		errorHandler(w, r, 404)
 	}
 	s := []byte(fmt.Sprintf("%X", sha1.Sum([]byte(r.URL.RawQuery))))
-	if filter.Check(s) {
-		w.WriteHeader(200)
-	} else {
-		w.WriteHeader(418)
+	check := filter.Check(s)
+	hit := Hit{check}
+	js, err := json.Marshal(hit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(js)
 }
 
 func checkSHA1(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" {
 		errorHandler(w, r, 404)
 	}
-	if filter.Check([]byte(r.URL.RawQuery)) {
-		w.WriteHeader(200)
-	} else {
-		w.WriteHeader(418)
+	s := []byte(r.URL.RawQuery)
+	check := filter.Check(s)
+	hit := Hit{check}
+	js, err := json.Marshal(hit)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	w.Write(js)
 }
 
 func main() {
 	var err error
-	filename := flag.String("f", "pwned-passwords-2.0.bloom", "The Bloom filter to load")
-	bind := flag.String("b", "0.0.0.0:8000", "The address to which to bind")
+	filename := flag.String("f", "pwned-passwords.bloom.gz", "The Bloom filter to load")
+	bind := flag.String("b", "127.0.0.1:8000", "The address to which to bind")
 	flag.Parse()
 	fmt.Printf("Loading Bloom filter from %s...\n", *filename)
 	filter, err = bloom.LoadFilter(*filename, true)
@@ -52,5 +68,6 @@ func main() {
 	fmt.Printf("Listening on %s...", *bind)
 	http.HandleFunc("/check", check)
 	http.HandleFunc("/check-sha1", checkSHA1)
-    fmt.Fprintln(os.Stderr, http.ListenAndServe(*bind, nil))
+	fmt.Fprintln(os.Stderr, http.ListenAndServe(*bind, nil))
 }
+
