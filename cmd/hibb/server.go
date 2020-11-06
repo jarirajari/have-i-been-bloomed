@@ -55,7 +55,7 @@ func checkSHA1(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var err error
 	filename := flag.String("f", "pwned-passwords.bloom.gz", "The Bloom filter to load")
-	bind := flag.String("b", "127.0.0.1:8000", "The address to which to bind")
+	bind := flag.String("b", "0.0.0.0:8000", "The address to which to bind")
 	flag.Parse()
 	fmt.Printf("Loading Bloom filter from %s...\n", *filename)
 	filter, err = bloom.LoadFilter(*filename, true)
