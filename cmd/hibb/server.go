@@ -11,13 +11,13 @@ import (
 )
 
 type Hit struct {
-	found	bool
+	Found	bool
 }
 
 var filter *bloom.BloomFilter
 
 func errorHandler(w http.ResponseWriter, r *http.Request, status int) {
-    w.WriteHeader(status)
+        w.WriteHeader(status)
 }
 
 func check(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +33,6 @@ func check(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
 	w.Write(js)
 }
 
@@ -50,7 +49,6 @@ func checkSHA1(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
 	w.Write(js)
 }
 
